@@ -535,6 +535,7 @@ function getFilteredData() {
 
 // ===== Columns =====
 const COLUMNS = [
+  { key: 'index', label: '序号' },
   { key: 'date', label: '日期' },
   { key: 'league', label: '赛事' },
   { key: 'home', label: '主场' },
@@ -623,7 +624,7 @@ function renderTableHead() {
 function renderTableBody() {
   const data = getFilteredData();
 
-  document.getElementById('tableBody').innerHTML = data.map(r => {
+  document.getElementById('tableBody').innerHTML = data.map((r, idx) => {
     const rowCls = r.correct ? 'correct' : 'wrong';
     const profitCls = r.profit > 0 ? 'profit-positive' : r.profit < 0 ? 'profit-negative' : '';
     const badge = r.correct
@@ -635,6 +636,7 @@ function renderTableBody() {
       : '-';
 
     return `<tr class="${rowCls}">
+      <td>${idx + 1}</td>
       <td>${r.date}</td>
       <td>${r.league}</td>
       <td><a class="team-link" href="https://www.google.com/search?q=${encodeURIComponent(r.home + ' 足球 最新资讯 赛程')}" target="_blank">${r.home}</a></td>
