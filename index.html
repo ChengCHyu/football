@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>足球预测记录</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --green: #10b981;
+  --green-bg: #ecfdf5;
+  --green-border: #a7f3d0;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --blue: #3b82f6;
+  --blue-bg: #eff6ff;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 10px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+/* ===== Stats Cards ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.stat-card .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.stat-card .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.stat-card .value.positive { color: var(--green); }
+.stat-card .value.negative { color: var(--red); }
+.stat-card .value.neutral  { color: var(--blue); }
+
+/* ===== Controls ===== */
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.controls select,
+.controls button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--card);
+  cursor: pointer;
+  color: var(--text);
+}
+
+.controls button {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  font-weight: 500;
+}
+
+.controls button:hover { opacity: 0.9; }
+
+.btn-secondary {
+  background: #6b7280 !important;
+}
+
+.btn-green {
+  background: var(--green) !important;
+}
+
+.btn-red {
+  background: var(--red) !important;
+}
+
+/* ===== Table ===== */
+.table-wrapper {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  font-size: 0.9rem;
+}
+
+thead th {
+  background: #f9fafb;
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+}
+
+thead th:hover { background: #f0f1f3; }
+
+thead th .sort-arrow {
+  margin-left: 4px;
+  font-size: 0.7rem;
+  opacity: 0.4;
+}
+
+thead th .sort-arrow.active { opacity: 1; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+tbody tr:nth-child(even) { background: #fafbfc; }
+tbody tr:hover { background: var(--blue-bg); }
+
+tbody tr.correct { background: var(--green-bg); }
+tbody tr.correct:hover { background: #d1fae5; }
+tbody tr.wrong { background: var(--red-bg); }
+tbody tr.wrong:hover { background: #fee2e2; }
+
+td {
+  padding: 10px;
+  white-space: nowrap;
+}
+
+td a.team-link {
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 0.15s;
+}
+
+td a.team-link:hover {
+  border-bottom-color: var(--blue);
+}
+
+td.profit-positive { color: var(--green); font-weight: 600; }
+td.profit-negative { color: var(--red); font-weight: 600; }
+
+td .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+td .badge.correct-badge {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green-border);
+}
+
+td .badge.wrong-badge {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.delete-btn {
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.delete-btn:hover { background: var(--red); color: #fff; }
+
+.edit-btn {
+  background: var(--blue-bg);
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.edit-btn:hover { background: var(--blue); color: #fff; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-md);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full { grid-column: 1 / -1; }
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-actions .btn-cancel {
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.modal-actions .btn-submit {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  body { padding: 12px; }
+  h1 { font-size: 1.4rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px 10px; }
+  .stat-card .value { font-size: 1.3rem; }
+  .controls { flex-direction: column; }
+  .controls select, .controls button { width: 100%; }
+  .form-grid { grid-template-columns: 1fr; }
+  .modal { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<h1>足球预测记录</h1>
+
+<!-- Stats Cards -->
+<div class="stats-grid" id="statsGrid"></div>
+
+<!-- Controls -->
+<div class="controls">
+  <select id="leagueFilter">
+    <option value="">全部赛事</option>
+  </select>
+  <select id="resultFilter">
+    <option value="">全部结果</option>
+    <option value="correct">预测正确</option>
+    <option value="wrong">预测错误</option>
+  </select>
+  <button onclick="openModal()">+ 添加记录</button>
+  <button class="btn-green" onclick="exportJSON()">导出 JSON</button>
+  <button class="btn-secondary" onclick="resetData()">重置数据</button>
+</div>
+
+<!-- Table -->
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr id="tableHead"></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<!-- Add Record Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">添加比赛记录</h2>
+    <input type="hidden" id="editRecordId">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>日期</label>
+        <input type="text" id="fDate" placeholder="2026.03.08">
+      </div>
+      <div class="form-group">
+        <label>比赛类型</label>
+        <input type="text" id="fLeague" placeholder="西甲">
+      </div>
+      <div class="form-group">
+        <label>主场</label>
+        <input type="text" id="fHome" placeholder="主队名称">
+      </div>
+      <div class="form-group">
+        <label>客场</label>
+        <input type="text" id="fAway" placeholder="客队名称">
+      </div>
+      <div class="form-group">
+        <label>预测</label>
+        <select id="fPrediction">
+          <option value="主胜">主胜</option>
+          <option value="客胜">客胜</option>
+          <option value="平">平</option>
+          <option value="主负">主负</option>
+          <option value="主让一球胜">主让一球胜</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>实际结果</label>
+        <select id="fActual">
+          <option value="主胜">主胜</option>
+          <option value="客胜">客胜</option>
+          <option value="平局">平局</option>
+          <option value="主负">主负</option>
+          <option value="主让两球胜">主让两球胜</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>赔率</label>
+        <input type="number" id="fOdds" step="0.01" placeholder="1.50">
+      </div>
+      <div class="form-group">
+        <label>比分</label>
+        <input type="text" id="fScore" placeholder="2比1">
+      </div>
+      <div class="form-group">
+        <label>买入</label>
+        <input type="text" id="fStake" placeholder="10">
+      </div>
+      <div class="form-group">
+        <label>盈亏</label>
+        <input type="number" id="fProfit" step="0.01" placeholder="5.00">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-submit" id="modalSubmitBtn" onclick="handleModalSubmit()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Original Data from xlsx =====
+const ORIGINAL_DATA = [
+  {"date":"2025.12.21","home":"黄潜","away":"巴萨","prediction":"客胜","actual":"客胜","odds":1.61,"score":"0比2","stake":"10","profit":6.1,"league":"西甲","correct":true},
+  {"date":"2026.01.07","home":"巴萨","away":"毕尔巴鄂","prediction":"主胜","actual":"主胜","odds":1.36,"score":"5比0","stake":"14","profit":5.01,"league":"西超杯","correct":true},
+  {"date":"2026.01.08","home":"伊拉克","away":"中国","prediction":"客胜","actual":"平局","odds":2.98,"score":"0比0","stake":"2","profit":-2,"league":"亚洲杯u23","correct":false},
+  {"date":"2026.01.08","home":"马德里竞技","away":"皇家马德里","prediction":"平","actual":"客胜","odds":3.3,"score":"1比2","stake":"2","profit":-2,"league":"西超杯","correct":false},
+  {"date":"2026.01.08","home":"阿森纳","away":"利物浦","prediction":"主胜","actual":"平局","odds":1.5,"score":"0比0","stake":"6","profit":-6,"league":"英超第21轮","correct":false},
+  {"date":"2026.01.11","home":"中国","away":"澳大利亚","prediction":"客胜","actual":"主胜","odds":1.52,"score":"1比0","stake":"6","profit":-6,"league":"亚洲杯u23","correct":false},
+  {"date":"2026.01.11","home":"巴萨","away":"皇马","prediction":"主胜","actual":"主胜","odds":1.88,"score":"3比2","stake":"10","profit":8.8,"league":"西超杯","correct":true},
+  {"date":"2026.01.25","home":"中国","away":"日本","prediction":"客胜","actual":"客胜","odds":1.56,"score":"0比4","stake":"10","profit":5.6,"league":"亚洲杯u23决赛","correct":true},
+  {"date":"2026.02.01","home":"布伦特福德","away":"阿森纳","prediction":"主负","actual":"平局","odds":1.5,"score":"1比1","stake":"10(和下面串)","profit":0,"league":"英超","correct":false},
+  {"date":"2026.02.01","home":"马德里竞技","away":"巴塞罗那","prediction":"主负","actual":"主胜","odds":2.11,"score":"4比0","stake":"10(和上面串)","profit":-10,"league":"国王杯","correct":false},
+  {"date":"2026.03.04","home":"巴塞罗那","away":"马德里竞技","prediction":"主让一球胜","actual":"主让两球胜","odds":2,"score":"3比0","stake":"10(和下面串)","profit":0,"league":"国王杯","correct":false},
+  {"date":"2026.03.04","home":"狼队","away":"利物浦","prediction":"主负","actual":"主胜","odds":1.3,"score":"2比1","stake":"10(和上面串)","profit":-10,"league":"英超","correct":false},
+  {"date":"2026.03.07","home":"毕尔巴鄂","away":"巴萨","prediction":"主负","actual":"主负","odds":1.5,"score":"0比1","stake":"10","profit":5,"league":"西甲","correct":true}
+];
+
+// ===== Assign IDs to original data =====
+ORIGINAL_DATA.forEach((r, i) => r._id = 'o' + i);
+
+// ===== State =====
+let sortCol = null;
+let sortAsc = true;
+
+function getData() {
+  const deletedIds = JSON.parse(localStorage.getItem('deletedIds') || '[]');
+  const added = JSON.parse(localStorage.getItem('addedRecords') || '[]');
+  const edited = JSON.parse(localStorage.getItem('editedRecords') || '{}');
+  const all = ORIGINAL_DATA.concat(added);
+  return all.filter(r => !deletedIds.includes(r._id)).map(r => {
+    if (edited[r._id]) {
+      return { ...r, ...edited[r._id] };
+    }
+    return r;
+  });
+}
+
+function getFilteredData() {
+  let data = getData();
+  const league = document.getElementById('leagueFilter').value;
+  const result = document.getElementById('resultFilter').value;
+  if (league) data = data.filter(r => r.league === league);
+  if (result === 'correct') data = data.filter(r => r.correct);
+  if (result === 'wrong') data = data.filter(r => !r.correct);
+  if (sortCol !== null) {
+    data.sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb||'').toLowerCase(); }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+  return data;
+}
+
+// ===== Columns =====
+const COLUMNS = [
+  { key: 'date', label: '日期' },
+  { key: 'league', label: '赛事' },
+  { key: 'home', label: '主场' },
+  { key: 'away', label: '客场' },
+  { key: 'prediction', label: '预测' },
+  { key: 'actual', label: '实际' },
+  { key: 'odds', label: '赔率' },
+  { key: 'score', label: '比分' },
+  { key: 'stake', label: '买入' },
+  { key: 'profit', label: '盈亏' },
+  { key: 'correct', label: '结果' }
+];
+
+// ===== Render Stats =====
+function renderStats() {
+  const data = getData();
+  const total = data.length;
+  const correctCount = data.filter(r => r.correct).length;
+  const winRate = total ? (correctCount / total * 100).toFixed(1) : 0;
+  const totalStake = data.reduce((s, r) => {
+    const v = parseFloat(String(r.stake).replace(/[^\d.]/g, '')) || 0;
+    return s + v;
+  }, 0);
+  const totalProfit = data.reduce((s, r) => s + (r.profit || 0), 0);
+  const roi = totalStake ? (totalProfit / totalStake * 100).toFixed(1) : 0;
+
+  const stats = [
+    { label: '总场次', value: total, cls: 'neutral' },
+    { label: '预测正确', value: correctCount, cls: 'positive' },
+    { label: '胜率', value: winRate + '%', cls: parseFloat(winRate) >= 50 ? 'positive' : 'negative' },
+    { label: '总投入', value: totalStake.toFixed(1), cls: 'neutral' },
+    { label: '总盈亏', value: (totalProfit >= 0 ? '+' : '') + totalProfit.toFixed(1), cls: totalProfit >= 0 ? 'positive' : 'negative' },
+    { label: 'ROI', value: (parseFloat(roi) >= 0 ? '+' : '') + roi + '%', cls: parseFloat(roi) >= 0 ? 'positive' : 'negative' }
+  ];
+
+  document.getElementById('statsGrid').innerHTML = stats.map(s =>
+    `<div class="stat-card"><div class="label">${s.label}</div><div class="value ${s.cls}">${s.value}</div></div>`
+  ).join('');
+}
+
+// ===== Render League Filter =====
+function renderLeagueFilter() {
+  const data = getData();
+  const leagues = [...new Set(data.map(r => r.league))].sort();
+  const sel = document.getElementById('leagueFilter');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">全部赛事</option>' +
+    leagues.map(l => `<option value="${l}"${l === current ? ' selected' : ''}>${l}</option>`).join('');
+}
+
+// ===== Render Table =====
+function renderTableHead() {
+  document.getElementById('tableHead').innerHTML = COLUMNS.map(col => {
+    let arrow = '↕';
+    let cls = '';
+    if (sortCol === col.key) {
+      arrow = sortAsc ? '↑' : '↓';
+      cls = 'active';
+    }
+    return `<th onclick="sortBy('${col.key}')">${col.label}<span class="sort-arrow ${cls}">${arrow}</span></th>`;
+  }).join('') + '<th></th>';
+}
+
+function renderTableBody() {
+  const data = getFilteredData();
+
+  document.getElementById('tableBody').innerHTML = data.map(r => {
+    const rowCls = r.correct ? 'correct' : 'wrong';
+    const profitCls = r.profit > 0 ? 'profit-positive' : r.profit < 0 ? 'profit-negative' : '';
+    const badge = r.correct
+      ? '<span class="badge correct-badge">正确</span>'
+      : '<span class="badge wrong-badge">错误</span>';
+
+    return `<tr class="${rowCls}">
+      <td>${r.date}</td>
+      <td>${r.league}</td>
+      <td><a class="team-link" href="https://www.google.com/search?q=${encodeURIComponent(r.home + ' 足球 最新资讯 赛程')}" target="_blank">${r.home}</a></td>
+      <td><a class="team-link" href="https://www.google.com/search?q=${encodeURIComponent(r.away + ' 足球 最新资讯 赛程')}" target="_blank">${r.away}</a></td>
+      <td>${r.prediction}</td>
+      <td>${r.actual}</td>
+      <td>${r.odds}</td>
+      <td>${r.score}</td>
+      <td>${r.stake}</td>
+      <td class="${profitCls}">${r.profit > 0 ? '+' : ''}${r.profit}</td>
+      <td>${badge}</td>
+      <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button></td>
+    </tr>`;
+  }).join('');
+
+  // Binddelete buttons
+  document.querySelectorAll('.delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rid = this.getAttribute('data-id');
+      var list = JSON.parse(localStorage.getItem('deletedIds') || '[]');
+      list.push(rid);
+      localStorage.setItem('deletedIds', JSON.stringify(list));
+      renderAll();
+    });
+  });
+
+  // Bind edit buttons
+  document.querySelectorAll('.edit-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rid = this.getAttribute('data-id');
+      openEditModal(rid);
+    });
+  });
+}
+
+function renderAll() {
+  renderStats();
+  renderLeagueFilter();
+  renderTableHead();
+  renderTableBody();
+}
+
+// ===== Sort =====
+function sortBy(col) {
+  if (sortCol === col) {
+    sortAsc = !sortAsc;
+  } else {
+    sortCol = col;
+    sortAsc = true;
+  }
+  renderTableHead();
+  renderTableBody();
+}
+
+// ===== Filter =====
+document.getElementById('leagueFilter').addEventListener('change', renderTableBody);
+document.getElementById('resultFilter').addEventListener('change', renderTableBody);
+
+// ===== Modal =====
+function openModal() {
+  document.getElementById('modalTitle').textContent = '添加比赛记录';
+  document.getElementById('editRecordId').value = '';
+  document.getElementById('modalSubmitBtn').textContent = '确认添加';
+  clearForm();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  const all = ORIGINAL_DATA.concat(JSON.parse(localStorage.getItem('addedRecords') || '[]'));
+  const record = all.find(r => r._id === id);
+  const edited = JSON.parse(localStorage.getItem('editedRecords') || '{}');
+  const finalRecord = { ...record, ...(edited[id] || {}) };
+
+  document.getElementById('modalTitle').textContent = '编辑比赛记录';
+  document.getElementById('editRecordId').value = id;
+  document.getElementById('modalSubmitBtn').textContent = '保存修改';
+
+  document.getElementById('fDate').value = finalRecord.date || '';
+  document.getElementById('fLeague').value = finalRecord.league || '';
+  document.getElementById('fHome').value = finalRecord.home || '';
+  document.getElementById('fAway').value = finalRecord.away || '';
+  document.getElementById('fPrediction').value = finalRecord.prediction || '主胜';
+  document.getElementById('fActual').value = finalRecord.actual || '主胜';
+  document.getElementById('fOdds').value = finalRecord.odds || '';
+  document.getElementById('fScore').value = finalRecord.score || '';
+  document.getElementById('fStake').value = finalRecord.stake || '';
+  document.getElementById('fProfit').value = finalRecord.profit || '';
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function clearForm() {
+  ['fDate','fHome','fAway','fOdds','fScore','fStake','fProfit','fLeague'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fPrediction').value = '主胜';
+  document.getElementById('fActual').value = '主胜';
+}
+
+function handleModalSubmit() {
+  const editId = document.getElementById('editRecordId').value;
+  if (editId) {
+    updateRecord(editId);
+  } else {
+    addRecord();
+  }
+}
+
+// ===== Add Record =====
+function addRecord() {
+  const date = document.getElementById('fDate').value.trim();
+  const home = document.getElementById('fHome').value.trim();
+  const away = document.getElementById('fAway').value.trim();
+  const prediction = document.getElementById('fPrediction').value;
+  const actual = document.getElementById('fActual').value;
+  const odds = parseFloat(document.getElementById('fOdds').value) || 0;
+  const score = document.getElementById('fScore').value.trim();
+  const stake = document.getElementById('fStake').value.trim();
+  const profit = parseFloat(document.getElementById('fProfit').value) || 0;
+  const league = document.getElementById('fLeague').value.trim();
+
+  if (!date || !home || !away) {
+    alert('请至少填写日期、主场和客场');
+    return;
+  }
+
+  const record = {
+    _id: 'a' + Date.now(),
+    date, home, away, prediction, actual, odds, score, stake, profit, league,
+    correct: prediction === actual
+  };
+
+  const added = JSON.parse(localStorage.getItem('addedRecords') || '[]');
+  added.push(record);
+  localStorage.setItem('addedRecords', JSON.stringify(added));
+
+  clearForm();
+  closeModal();
+  renderAll();
+}
+
+// ===== Update Record =====
+function updateRecord(id) {
+  const date = document.getElementById('fDate').value.trim();
+  const home = document.getElementById('fHome').value.trim();
+  const away = document.getElementById('fAway').value.trim();
+  const prediction = document.getElementById('fPrediction').value;
+  const actual = document.getElementById('fActual').value;
+  const odds = parseFloat(document.getElementById('fOdds').value) || 0;
+  const score = document.getElementById('fScore').value.trim();
+  const stake = document.getElementById('fStake').value.trim();
+  const profit = parseFloat(document.getElementById('fProfit').value) || 0;
+  const league = document.getElementById('fLeague').value.trim();
+
+  if (!date || !home || !away) {
+    alert('请至少填写日期、主场和客场');
+    return;
+  }
+
+  const edited = JSON.parse(localStorage.getItem('editedRecords') || '{}');
+  edited[id] = {
+    date, home, away, prediction, actual, odds, score, stake, profit, league,
+    correct: prediction === actual
+  };
+  localStorage.setItem('editedRecords', JSON.stringify(edited));
+
+  clearForm();
+  closeModal();
+  renderAll();
+}
+
+// ===== Export JSON =====
+function exportJSON() {
+  const data = getData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '足球预测数据_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== Reset Data =====
+function resetData() {
+  if (!confirm('确认恢复到初始状态？将清除所有修改。')) return;
+  localStorage.removeItem('addedRecords');
+  localStorage.removeItem('deletedIds');
+  localStorage.removeItem('editedRecords');
+  renderAll();
+}
+
+// ===== Init =====
+renderAll();
+</script>
+</body>
+</html>
