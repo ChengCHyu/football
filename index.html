@@ -349,7 +349,7 @@ td .badge.wrong-badge {
 </head>
 <body>
 
-<h1>足球预测记录 <span id="userStatus"></span></h1>
+<h1>足球预测记录</h1>
 
 <!-- Stats Cards -->
 <div class="stats-grid" id="statsGrid"></div>
@@ -364,49 +364,9 @@ td .badge.wrong-badge {
     <option value="correct">预测正确</option>
     <option value="wrong">预测错误</option>
   </select>
-  <span id="adminControls" style="display:none;">
-    <button onclick="openModal()">+ 添加记录</button>
-    <button class="btn-secondary" onclick="resetData()">重置数据</button>
-  </span>
+  <button onclick="openModal()">+ 添加记录</button>
   <button class="btn-green" onclick="exportJSON()">导出 JSON</button>
-  <button id="loginBtn" onclick="openLoginModal()">登录</button>
-</div>
-
-<!-- Login Modal -->
-<div class="modal-overlay" id="loginModal">
-  <div class="modal" style="max-width:360px;">
-    <h2 id="loginTitle">管理员登录</h2>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>密码</label>
-        <input type="password" id="loginPassword" placeholder="请输入密码">
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeLoginModal()">取消</button>
-      <button class="btn-submit" onclick="handleLogin()">确定</button>
-    </div>
-  </div>
-</div>
-
-<!-- Set Password Modal -->
-<div class="modal-overlay" id="setPwdModal">
-  <div class="modal" style="max-width:360px;">
-    <h2>设置管理员密码</h2>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>新密码</label>
-        <input type="password" id="newPassword" placeholder="设置密码">
-      </div>
-      <div class="form-group full">
-        <label>确认密码</label>
-        <input type="password" id="confirmPassword" placeholder="确认密码">
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-submit" onclick="handleSetPassword()">设置密码</button>
-    </div>
-  </div>
+  <button class="btn-secondary" onclick="resetData()">重置数据</button>
 </div>
 
 <!-- Table -->
@@ -540,96 +500,6 @@ const ORIGINAL_DATA = [
 let sortCol = null;
 let sortAsc = true;
 let currentParlayGroup = null;
-let isAdmin = false;
-
-// ===== Auth Functions =====
-function checkAuth() {
-  const adminPwd = localStorage.getItem('adminPwd');
-  const loggedIn = localStorage.getItem('isLoggedIn');
-  
-  if (!adminPwd) {
-    document.getElementById('setPwdModal').classList.add('open');
-    return;
-  }
-  
-  if (loggedIn === 'true') {
-    isAdmin = true;
-    updateAuthUI();
-  }
-}
-
-function updateAuthUI() {
-  const adminControls = document.getElementById('adminControls');
-  const loginBtn = document.getElementById('loginBtn');
-  const userStatus = document.getElementById('userStatus');
-  
-  if (isAdmin) {
-    adminControls.style.display = 'inline-flex';
-    loginBtn.textContent = '退出';
-    loginBtn.onclick = handleLogout;
-    userStatus.innerHTML = '<span style="font-size:0.8rem;color:#10b981;font-weight:normal;">(已登录)</span>';
-    
-    document.querySelectorAll('.edit-btn, .delete-btn').forEach(btn => btn.style.display = '');
-  } else {
-    adminControls.style.display = 'none';
-    loginBtn.textContent = '登录';
-    loginBtn.onclick = openLoginModal;
-    userStatus.innerHTML = '<span style="font-size:0.8rem;color:#6b7280;font-weight:normal;">(访客)</span>';
-    
-    document.querySelectorAll('.edit-btn, .delete-btn').forEach(btn => btn.style.display = 'none');
-  }
-}
-
-function openLoginModal() {
-  document.getElementById('loginPassword').value = '';
-  document.getElementById('loginTitle').textContent = '管理员登录';
-  document.getElementById('loginModal').classList.add('open');
-}
-
-function closeLoginModal() {
-  document.getElementById('loginModal').classList.remove('open');
-}
-
-function handleLogin() {
-  const pwd = document.getElementById('loginPassword').value;
-  const adminPwd = localStorage.getItem('adminPwd');
-  
-  if (pwd === adminPwd) {
-    localStorage.setItem('isLoggedIn', 'true');
-    isAdmin = true;
-    closeLoginModal();
-    updateAuthUI();
-  } else {
-    alert('密码错误');
-  }
-}
-
-function handleLogout() {
-  localStorage.setItem('isLoggedIn', 'false');
-  isAdmin = false;
-  updateAuthUI();
-}
-
-function handleSetPassword() {
-  const newPwd = document.getElementById('newPassword').value;
-  const confirmPwd = document.getElementById('confirmPassword').value;
-  
-  if (!newPwd) {
-    alert('请输入密码');
-    return;
-  }
-  
-  if (newPwd !== confirmPwd) {
-    alert('两次密码不一致');
-    return;
-  }
-  
-  localStorage.setItem('adminPwd', newPwd);
-  localStorage.setItem('isLoggedIn', 'true');
-  document.getElementById('setPwdModal').classList.remove('open');
-  isAdmin = true;
-  updateAuthUI();
-}
 
 function getData() {
   const deletedIds = JSON.parse(localStorage.getItem('deletedIds') || '[]');
@@ -782,8 +652,6 @@ function renderTableBody() {
       <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button></td>
     </tr>`;
   }).join('');
-  
-  updateAuthUI();
 
   // Binddelete buttons
   document.querySelectorAll('.delete-btn').forEach(function(btn) {
@@ -944,10 +812,6 @@ function handleModalSubmit() {
 
 // ===== Add Record =====
 function addRecord() {
-  if (!isAdmin) {
-    alert('请先登录');
-    return;
-  }
   const date = document.getElementById('fDate').value.trim();
   const home = document.getElementById('fHome').value.trim();
   const away = document.getElementById('fAway').value.trim();
@@ -995,10 +859,6 @@ function addRecord() {
 
 // ===== Update Record =====
 function updateRecord(id) {
-  if (!isAdmin) {
-    alert('请先登录');
-    return;
-  }
   const date = document.getElementById('fDate').value.trim();
   const home = document.getElementById('fHome').value.trim();
   const away = document.getElementById('fAway').value.trim();
@@ -1063,7 +923,6 @@ function resetData() {
 }
 
 // ===== Init =====
-checkAuth();
 renderAll();
 </script>
 </body>
