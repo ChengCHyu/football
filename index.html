@@ -430,6 +430,18 @@ td .badge.wrong-badge {
         <input type="text" id="fScore" placeholder="2比1">
       </div>
       <div class="form-group">
+        <label>串关模式</label>
+        <select id="fParlayMode" onchange="handleParlayModeChange()">
+          <option value="single">不串关</option>
+          <option value="start">开始串关</option>
+          <option value="join">加入串关</option>
+        </select>
+      </div>
+      <div class="form-group" id="parlayGroupSelect" style="display:none;">
+        <label>选择串关组</label>
+        <select id="fParlayGroup"></select>
+      </div>
+      <div class="form-group">
         <label>买入</label>
         <input type="text" id="fStake" placeholder="10">
       </div>
@@ -448,19 +460,40 @@ td .badge.wrong-badge {
 <script>
 // ===== Original Data from xlsx =====
 const ORIGINAL_DATA = [
-  {"date":"2025.12.21","home":"黄潜","away":"巴萨","prediction":"客胜","actual":"客胜","odds":1.61,"score":"0比2","stake":"10","profit":6.1,"league":"西甲","correct":true},
-  {"date":"2026.01.07","home":"巴萨","away":"毕尔巴鄂","prediction":"主胜","actual":"主胜","odds":1.36,"score":"5比0","stake":"14","profit":5.01,"league":"西超杯","correct":true},
-  {"date":"2026.01.08","home":"伊拉克","away":"中国","prediction":"客胜","actual":"平局","odds":2.98,"score":"0比0","stake":"2","profit":-2,"league":"亚洲杯u23","correct":false},
-  {"date":"2026.01.08","home":"马德里竞技","away":"皇家马德里","prediction":"平","actual":"客胜","odds":3.3,"score":"1比2","stake":"2","profit":-2,"league":"西超杯","correct":false},
-  {"date":"2026.01.08","home":"阿森纳","away":"利物浦","prediction":"主胜","actual":"平局","odds":1.5,"score":"0比0","stake":"6","profit":-6,"league":"英超第21轮","correct":false},
-  {"date":"2026.01.11","home":"中国","away":"澳大利亚","prediction":"客胜","actual":"主胜","odds":1.52,"score":"1比0","stake":"6","profit":-6,"league":"亚洲杯u23","correct":false},
-  {"date":"2026.01.11","home":"巴萨","away":"皇马","prediction":"主胜","actual":"主胜","odds":1.88,"score":"3比2","stake":"10","profit":8.8,"league":"西超杯","correct":true},
-  {"date":"2026.01.25","home":"中国","away":"日本","prediction":"客胜","actual":"客胜","odds":1.56,"score":"0比4","stake":"10","profit":5.6,"league":"亚洲杯u23决赛","correct":true},
-  {"date":"2026.02.01","home":"布伦特福德","away":"阿森纳","prediction":"主负","actual":"平局","odds":1.5,"score":"1比1","stake":"10(和下面串)","profit":0,"league":"英超","correct":false},
-  {"date":"2026.02.01","home":"马德里竞技","away":"巴塞罗那","prediction":"主负","actual":"主胜","odds":2.11,"score":"4比0","stake":"10(和上面串)","profit":-10,"league":"国王杯","correct":false},
-  {"date":"2026.03.04","home":"巴塞罗那","away":"马德里竞技","prediction":"主让一球胜","actual":"主让两球胜","odds":2,"score":"3比0","stake":"10(和下面串)","profit":0,"league":"国王杯","correct":false},
-  {"date":"2026.03.04","home":"狼队","away":"利物浦","prediction":"主负","actual":"主胜","odds":1.3,"score":"2比1","stake":"10(和上面串)","profit":-10,"league":"英超","correct":false},
-  {"date":"2026.03.07","home":"毕尔巴鄂","away":"巴萨","prediction":"主负","actual":"主负","odds":1.5,"score":"0比1","stake":"10","profit":5,"league":"西甲","correct":true}
+  {"date":"2025.12.21","home":"黄潜","away":"巴萨","prediction":"客胜","actual":"客胜","odds":1.61,"score":"0比2","stake":"10","profit":6.1,"league":"西甲","correct":true,"parlay":false},
+  {"date":"2026.01.07","home":"巴萨","away":"毕尔巴鄂","prediction":"主胜","actual":"主胜","odds":1.36,"score":"5比0","stake":"14","profit":5.01,"league":"西超杯","correct":true,"parlay":false},
+  {"date":"2026.01.08","home":"伊拉克","away":"中国","prediction":"客胜","actual":"平局","odds":2.98,"score":"0比0","stake":"2","profit":-2,"league":"亚洲杯u23","correct":false,"parlay":false},
+  {"date":"2026.01.08","home":"马德里竞技","away":"皇家马德里","prediction":"平","actual":"客胜","odds":3.3,"score":"1比2","stake":"2","profit":-2,"league":"西超杯","correct":false,"parlay":false},
+  {"date":"2026.01.08","home":"阿森纳","away":"利物浦","prediction":"主胜","actual":"平局","odds":1.5,"score":"0比0","stake":"6","profit":-6,"league":"英超第21轮","correct":false,"parlay":false},
+  {"date":"2026.01.11","home":"中国","away":"澳大利亚","prediction":"客胜","actual":"主胜","odds":1.52,"score":"1比0","stake":"6","profit":-6,"league":"亚洲杯u23","correct":false,"parlay":false},
+  {"date":"2026.01.11","home":"巴萨","away":"皇马","prediction":"主胜","actual":"主胜","odds":1.88,"score":"3比2","stake":"10","profit":8.8,"league":"西超杯","correct":true,"parlay":false},
+  {"date":"2026.01.25","home":"中国","away":"日本","prediction":"客胜","actual":"客胜","odds":1.56,"score":"0比4","stake":"10","profit":5.6,"league":"亚洲杯u23决赛","correct":true,"parlay":false},
+  {"date":"2026.02.01","home":"布伦特福德","away":"阿森纳","prediction":"主负","actual":"平局","odds":1.5,"score":"1比1","stake":"10","profit":0,"league":"英超","correct":false,"parlay":true,"parlayGroup":"chuan1"},
+  {"date":"2026.02.01","home":"马德里竞技","away":"巴塞罗那","prediction":"主负","actual":"主胜","odds":2.11,"score":"4比0","stake":"10","profit":-10,"league":"国王杯","correct":false,"parlay":true,"parlayGroup":"chuan1"},
+  {"date":"2026.03.04","home":"巴塞罗那","away":"马德里竞技","prediction":"主让一球胜","actual":"主让两球胜","odds":2,"score":"3比0","stake":"10","profit":0,"league":"国王杯","correct":false,"parlay":true,"parlayGroup":"chuan2"},
+  {"date":"2026.03.04","home":"狼队","away":"利物浦","prediction":"主负","actual":"主胜","odds":1.3,"score":"2比1","stake":"10","profit":-10,"league":"英超","correct":false,"parlay":true,"parlayGroup":"chuan2"},
+  {"date":"2026.03.07","home":"毕尔巴鄂","away":"巴萨","prediction":"主负","actual":"主负","odds":1.5,"score":"0比1","stake":"10","profit":5,"league":"西甲","correct":true,"parlay":false},
+  {"_id":"a1773179837738","date":"2026.03.10","home":"纽卡","away":"巴萨","prediction":"客胜","actual":"平局","odds":2.17,"score":"1:1","stake":"10","profit":-10,"league":"欧冠","correct":false,"parlay":false},
+  {"_id":"a1773179915662","date":"2026.03.10","home":"加拉塔萨雷","away":"利物浦","prediction":"客胜","actual":"主胜","odds":1.58,"score":"1:0","stake":"8","profit":-8,"league":"欧冠","correct":false,"parlay":true,"parlayGroup":"chuan3"},
+  {"_id":"a1773180000668","date":"2026.03.10","home":"马竞","away":"热刺","prediction":"主胜","actual":"主胜","odds":1.5,"score":"5比2","stake":"8","profit":0,"league":"欧冠","correct":true,"parlay":true,"parlayGroup":"chuan3"},
+  {"_id":"a1773180075526","date":"2026.03.10","home":"亚特兰大","away":"拜仁","prediction":"客胜","actual":"客胜","odds":1.51,"score":"1比6","stake":"6","profit":9,"league":"欧冠","correct":true,"parlay":false},
+  {"_id":"a1775399474174","date":"2026.03.11","home":"皇马","away":"曼城","prediction":"主负","actual":"主胜","odds":1.83,"score":"3:0","stake":"10","profit":-10,"league":"欧冠","correct":false,"parlay":true,"parlayGroup":"chuan4"},
+  {"_id":"a1775399533856","date":"2026.03.11","home":"勒沃库森","away":"阿森纳","prediction":"主负","actual":"平局","odds":1.34,"score":"1:1","stake":"10","profit":0,"league":"欧冠","correct":false,"parlay":true,"parlayGroup":"chuan4"},
+  {"_id":"a1775399608814","date":"2026.03.11","home":"博德闪耀","away":"里斯本竞技","prediction":"主胜","actual":"主胜","odds":2.25,"score":"3比0","stake":"10","profit":0,"league":"欧冠","correct":true,"parlay":true,"parlayGroup":"chuan4"},
+  {"_id":"a1775399710117","date":"2026.03.11","home":"巴黎","away":"切尔西","prediction":"平","actual":"主胜","odds":3.55,"score":"5:2","stake":"10","profit":0,"league":"欧冠","correct":false,"parlay":true,"parlayGroup":"chuan4"},
+  {"_id":"a1775399813465","date":"2026.03.18","home":"巴萨","away":"纽卡","prediction":"主胜","actual":"主胜","odds":1.5,"score":"7:2","stake":"10","profit":0,"league":"欧冠","correct":true,"parlay":false},
+  {"_id":"a1775400053144","date":"2026.03.22","home":"阿森纳","away":"曼城","prediction":"平","actual":"主负","odds":3.1,"score":"0:2","stake":"2","profit":-2,"league":"英联杯","correct":false,"parlay":true,"parlayGroup":"chuan5"},
+  {"_id":"a1775400110894","date":"2026.03.22","home":"皇马","away":"马竞","prediction":"主负","actual":"主胜","odds":3.65,"score":"3:2","stake":"2","profit":0,"league":"欧冠","correct":false,"parlay":true,"parlayGroup":"chuan5"},
+  {"_id":"a1775400190365","date":"2026.03.26","home":"意大利","away":"北爱尔兰","prediction":"主负","actual":"主胜","odds":11,"score":"2:0","stake":"2","profit":-2,"league":"世预赛","correct":false,"parlay":false},
+  {"_id":"a1775400281560","date":"2026.03.27","home":"中国","away":"库拉索","prediction":"主负","actual":"主胜","odds":1.76,"score":"2:0","stake":"10","profit":-10,"league":"fifa系列赛","correct":false,"parlay":false},
+  {"_id":"a1775400721462","date":"2026.04.03","home":"巴列卡诺","away":"埃尔切","prediction":"主负","actual":"主胜","odds":4.58,"score":"1:0","stake":"2","profit":-2,"league":"西甲","correct":false,"parlay":false},
+  {"_id":"a1775400771588","date":"2026.04.04","home":"马洛卡","away":"皇马","prediction":"主负","actual":"主胜","odds":1.43,"score":"2:1","stake":"6","profit":-6,"league":"西甲","correct":false,"parlay":false},
+  {"_id":"a1775400855342","date":"2026.04.04","home":"马竞","away":"巴萨","prediction":"主负","actual":"主负","odds":1.98,"score":"1:2","stake":"10","profit":9.8,"league":"西甲","correct":true,"parlay":false},
+  {"_id":"a1775401002690","date":"2026.04.04","home":"曼城","away":"利物浦","prediction":"主胜","actual":"主胜","odds":1.63,"score":"4:0","stake":"12","profit":-12,"league":"足总杯","correct":true,"parlay":true,"parlayGroup":"chuan6"},
+  {"_id":"a1775401147739","date":"2026.04.04","home":"弗赖堡","away":"拜仁","prediction":"客胜","actual":"客胜","odds":1.29,"score":"2:3","stake":"12","profit":0,"league":"德甲","correct":true,"parlay":true,"parlayGroup":"chuan6"},
+  {"_id":"a1775401470826","date":"2026.04.04","home":"马洛卡","away":"皇马","prediction":"客胜","actual":"主胜","odds":1.39,"score":"2:1","stake":"12","profit":0,"league":"西甲","correct":false,"parlay":true,"parlayGroup":"chuan6"},
+  {"_id":"a1775401546652","date":"2026.04.04","home":"南安普顿","away":"阿森纳","prediction":"客胜","actual":"主胜","odds":1.29,"score":"2:1","stake":"12","profit":0,"league":"足总杯","correct":false,"parlay":true,"parlayGroup":"chuan6"},
+  {"_id":"a1775401591320","date":"2026.04.04","home":"马竞","away":"巴萨","prediction":"客胜","actual":"客胜","odds":1.9,"score":"1:2","stake":"12","profit":0,"league":"西甲","correct":true,"parlay":true,"parlayGroup":"chuan6"}
 ];
 
 // ===== Assign IDs to original data =====
@@ -469,6 +502,7 @@ ORIGINAL_DATA.forEach((r, i) => r._id = 'o' + i);
 // ===== State =====
 let sortCol = null;
 let sortAsc = true;
+let currentParlayGroup = null;
 
 function getData() {
   const deletedIds = JSON.parse(localStorage.getItem('deletedIds') || '[]');
@@ -513,6 +547,7 @@ const COLUMNS = [
   { key: 'odds', label: '赔率' },
   { key: 'score', label: '比分' },
   { key: 'stake', label: '买入' },
+  { key: 'parlay', label: '串关' },
   { key: 'profit', label: '盈亏' },
   { key: 'correct', label: '结果' }
 ];
@@ -529,14 +564,35 @@ function renderStats() {
   }, 0);
   const totalProfit = data.reduce((s, r) => s + (r.profit || 0), 0);
   const roi = totalStake ? (totalProfit / totalStake * 100).toFixed(1) : 0;
+  
+  const parlayData = data.filter(r => r.parlay);
+  const parlayGroups = {};
+  parlayData.forEach(r => {
+    if (r.parlayGroup) {
+      if (!parlayGroups[r.parlayGroup]) {
+        parlayGroups[r.parlayGroup] = [];
+      }
+      parlayGroups[r.parlayGroup].push(r);
+    }
+  });
+  const parlayGroupCount = Object.keys(parlayGroups).length;
+  const parlayTotalStake = parlayData.reduce((s, r) => {
+    const v = parseFloat(String(r.stake).replace(/[^\d.]/g, '')) || 0;
+    return s + v;
+  }, 0);
+  const parlayProfit = parlayData.reduce((s, r) => s + (r.profit || 0), 0);
+  const singleData = data.filter(r => !r.parlay);
+  const singleProfit = singleData.reduce((s, r) => s + (r.profit || 0), 0);
 
   const stats = [
     { label: '总场次', value: total, cls: 'neutral' },
     { label: '预测正确', value: correctCount, cls: 'positive' },
     { label: '胜率', value: winRate + '%', cls: parseFloat(winRate) >= 50 ? 'positive' : 'negative' },
+    { label: '串关组', value: parlayGroupCount, cls: 'neutral' },
+    { label: '单关盈利', value: (singleProfit >= 0 ? '+' : '') + singleProfit.toFixed(1), cls: singleProfit >= 0 ? 'positive' : 'negative' },
+    { label: '串关盈利', value: (parlayProfit >= 0 ? '+' : '') + parlayProfit.toFixed(1), cls: parlayProfit >= 0 ? 'positive' : 'negative' },
     { label: '总投入', value: totalStake.toFixed(1), cls: 'neutral' },
-    { label: '总盈亏', value: (totalProfit >= 0 ? '+' : '') + totalProfit.toFixed(1), cls: totalProfit >= 0 ? 'positive' : 'negative' },
-    { label: 'ROI', value: (parseFloat(roi) >= 0 ? '+' : '') + roi + '%', cls: parseFloat(roi) >= 0 ? 'positive' : 'negative' }
+    { label: '总盈亏', value: (totalProfit >= 0 ? '+' : '') + totalProfit.toFixed(1), cls: totalProfit >= 0 ? 'positive' : 'negative' }
   ];
 
   document.getElementById('statsGrid').innerHTML = stats.map(s =>
@@ -576,6 +632,10 @@ function renderTableBody() {
     const badge = r.correct
       ? '<span class="badge correct-badge">正确</span>'
       : '<span class="badge wrong-badge">错误</span>';
+    
+    const parlayBadge = r.parlay && r.parlayGroup
+      ? `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;">${r.parlayGroup}</span>`
+      : '-';
 
     return `<tr class="${rowCls}">
       <td>${r.date}</td>
@@ -587,6 +647,7 @@ function renderTableBody() {
       <td>${r.odds}</td>
       <td>${r.score}</td>
       <td>${r.stake}</td>
+      <td>${parlayBadge}</td>
       <td class="${profitCls}">${r.profit > 0 ? '+' : ''}${r.profit}</td>
       <td>${badge}</td>
       <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button></td>
@@ -636,12 +697,53 @@ function sortBy(col) {
 document.getElementById('leagueFilter').addEventListener('change', renderTableBody);
 document.getElementById('resultFilter').addEventListener('change', renderTableBody);
 
+// ===== Parlay Functions =====
+function handleParlayModeChange() {
+  const mode = document.getElementById('fParlayMode').value;
+  const groupSelect = document.getElementById('parlayGroupSelect');
+  
+  if (mode === 'join') {
+    groupSelect.style.display = 'flex';
+    refreshParlayGroupOptions();
+  } else {
+    groupSelect.style.display = 'none';
+  }
+}
+
+function refreshParlayGroupOptions() {
+  const data = getData();
+  const groups = {};
+  
+  data.forEach(r => {
+    if (r.parlay && r.parlayGroup) {
+      if (!groups[r.parlayGroup]) {
+        groups[r.parlayGroup] = [];
+      }
+      groups[r.parlayGroup].push(r);
+    }
+  });
+  
+  const select = document.getElementById('fParlayGroup');
+  select.innerHTML = Object.keys(groups).map(g => {
+    const count = groups[g].length;
+    const firstMatch = groups[g][0];
+    return `<option value="${g}">${g} (${count}场, ${firstMatch.date})</option>`;
+  }).join('');
+}
+
+function generateParlayGroupId() {
+  return 'chuan' + Date.now();
+}
+
 // ===== Modal =====
 function openModal() {
   document.getElementById('modalTitle').textContent = '添加比赛记录';
   document.getElementById('editRecordId').value = '';
   document.getElementById('modalSubmitBtn').textContent = '确认添加';
   clearForm();
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+  document.getElementById('fDate').value = dateStr;
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -665,6 +767,20 @@ function openEditModal(id) {
   document.getElementById('fScore').value = finalRecord.score || '';
   document.getElementById('fStake').value = finalRecord.stake || '';
   document.getElementById('fProfit').value = finalRecord.profit || '';
+  
+  const isParlay = finalRecord.parlay || false;
+  const parlayMode = document.getElementById('fParlayMode');
+  const parlayGroupSelect = document.getElementById('parlayGroupSelect');
+  
+  if (isParlay && finalRecord.parlayGroup) {
+    parlayMode.value = 'join';
+    parlayGroupSelect.style.display = 'flex';
+    refreshParlayGroupOptions();
+    document.getElementById('fParlayGroup').value = finalRecord.parlayGroup;
+  } else {
+    parlayMode.value = 'single';
+    parlayGroupSelect.style.display = 'none';
+  }
 
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -679,6 +795,8 @@ function clearForm() {
   });
   document.getElementById('fPrediction').value = '主胜';
   document.getElementById('fActual').value = '主胜';
+  document.getElementById('fParlayMode').value = 'single';
+  document.getElementById('parlayGroupSelect').style.display = 'none';
 }
 
 function handleModalSubmit() {
@@ -702,16 +820,30 @@ function addRecord() {
   const stake = document.getElementById('fStake').value.trim();
   const profit = parseFloat(document.getElementById('fProfit').value) || 0;
   const league = document.getElementById('fLeague').value.trim();
+  const parlayMode = document.getElementById('fParlayMode').value;
 
   if (!date || !home || !away) {
     alert('请至少填写日期、主场和客场');
     return;
   }
 
+  let parlay = false;
+  let parlayGroup = null;
+
+  if (parlayMode === 'start') {
+    parlay = true;
+    parlayGroup = generateParlayGroupId();
+  } else if (parlayMode === 'join') {
+    parlay = true;
+    parlayGroup = document.getElementById('fParlayGroup').value;
+  }
+
   const record = {
     _id: 'a' + Date.now(),
     date, home, away, prediction, actual, odds, score, stake, profit, league,
-    correct: prediction === actual
+    correct: prediction === actual,
+    parlay,
+    parlayGroup
   };
 
   const added = JSON.parse(localStorage.getItem('addedRecords') || '[]');
@@ -735,16 +867,30 @@ function updateRecord(id) {
   const stake = document.getElementById('fStake').value.trim();
   const profit = parseFloat(document.getElementById('fProfit').value) || 0;
   const league = document.getElementById('fLeague').value.trim();
+  const parlayMode = document.getElementById('fParlayMode').value;
 
   if (!date || !home || !away) {
     alert('请至少填写日期、主场和客场');
     return;
   }
 
+  let parlay = false;
+  let parlayGroup = null;
+
+  if (parlayMode === 'start') {
+    parlay = true;
+    parlayGroup = generateParlayGroupId();
+  } else if (parlayMode === 'join') {
+    parlay = true;
+    parlayGroup = document.getElementById('fParlayGroup').value;
+  }
+
   const edited = JSON.parse(localStorage.getItem('editedRecords') || '{}');
   edited[id] = {
     date, home, away, prediction, actual, odds, score, stake, profit, league,
-    correct: prediction === actual
+    correct: prediction === actual,
+    parlay,
+    parlayGroup
   };
   localStorage.setItem('editedRecords', JSON.stringify(edited));
 
