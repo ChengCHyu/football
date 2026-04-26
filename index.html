@@ -637,7 +637,7 @@ function renderTableBody() {
       <td>${parlayBadge}</td>
       <td class="${profitCls}">${r.profit > 0 ? '+' : ''}${r.profit}</td>
       <td>${badge}</td>
-      <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button></td>
+      <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button> <button class="copy-btn" data-id="${r._id}">复制</button></td>
     </tr>`;
   }).join('');
 
@@ -657,6 +657,14 @@ function renderTableBody() {
     btn.addEventListener('click', function() {
       var rid = this.getAttribute('data-id');
       openEditModal(rid);
+    });
+  });
+
+  // Bind copy buttons
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rid = this.getAttribute('data-id');
+      copyRecord(rid);
     });
   });
 }
@@ -771,6 +779,32 @@ function openEditModal(id) {
     parlayMode.value = 'single';
     parlayGroupSelect.style.display = 'none';
   }
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function copyRecord(id) {
+  const all = ORIGINAL_DATA.concat(JSON.parse(localStorage.getItem('addedRecords') || '[]'));
+  const record = all.find(r => r._id === id);
+  const edited = JSON.parse(localStorage.getItem('editedRecords') || '{}');
+  const finalRecord = { ...record, ...(edited[id] || {}) };
+
+  document.getElementById('modalTitle').textContent = '添加比赛记录(复制)';
+  document.getElementById('editRecordId').value = '';
+  document.getElementById('modalSubmitBtn').textContent = '确认添加';
+
+  document.getElementById('fDate').value = finalRecord.date || '';
+  document.getElementById('fLeague').value = finalRecord.league || '';
+  document.getElementById('fHome').value = finalRecord.home || '';
+  document.getElementById('fAway').value = finalRecord.away || '';
+  document.getElementById('fPrediction').value = finalRecord.prediction || '';
+  document.getElementById('fActual').value = finalRecord.actual || '';
+  document.getElementById('fOdds').value = finalRecord.odds || '';
+  document.getElementById('fScore').value = finalRecord.score || '';
+  document.getElementById('fStake').value = finalRecord.stake || '';
+  document.getElementById('fProfit').value = finalRecord.profit || '';
+  document.getElementById('fParlayMode').value = 'single';
+  document.getElementById('parlayGroupSelect').style.display = 'none';
 
   document.getElementById('modalOverlay').classList.add('open');
 }
