@@ -403,23 +403,11 @@ td .badge.wrong-badge {
       </div>
       <div class="form-group">
         <label>预测</label>
-        <select id="fPrediction">
-          <option value="主胜">主胜</option>
-          <option value="客胜">客胜</option>
-          <option value="平">平</option>
-          <option value="主负">主负</option>
-          <option value="主让一球胜">主让一球胜</option>
-        </select>
+        <input type="text" id="fPrediction" placeholder="主胜">
       </div>
       <div class="form-group">
         <label>实际结果</label>
-        <select id="fActual">
-          <option value="主胜">主胜</option>
-          <option value="客胜">客胜</option>
-          <option value="平局">平局</option>
-          <option value="主负">主负</option>
-          <option value="主让两球胜">主让两球胜</option>
-        </select>
+        <input type="text" id="fActual" placeholder="主胜">
       </div>
       <div class="form-group">
         <label>赔率</label>
@@ -763,8 +751,8 @@ function openEditModal(id) {
   document.getElementById('fLeague').value = finalRecord.league || '';
   document.getElementById('fHome').value = finalRecord.home || '';
   document.getElementById('fAway').value = finalRecord.away || '';
-  document.getElementById('fPrediction').value = finalRecord.prediction || '主胜';
-  document.getElementById('fActual').value = finalRecord.actual || '主胜';
+  document.getElementById('fPrediction').value = finalRecord.prediction || '';
+  document.getElementById('fActual').value = finalRecord.actual || '';
   document.getElementById('fOdds').value = finalRecord.odds || '';
   document.getElementById('fScore').value = finalRecord.score || '';
   document.getElementById('fStake').value = finalRecord.stake || '';
@@ -792,13 +780,10 @@ function closeModal() {
 }
 
 function clearForm() {
-  ['fDate','fHome','fAway','fOdds','fScore','fStake','fProfit','fLeague'].forEach(id => {
+  ['fDate','fHome','fAway','fOdds','fScore','fStake','fProfit','fLeague','fPrediction','fActual'].forEach(id => {
     document.getElementById(id).value = '';
   });
-  document.getElementById('fPrediction').value = '主胜';
-  document.getElementById('fActual').value = '主胜';
   document.getElementById('fParlayMode').value = 'single';
-  document.getElementById('parlayGroupSelect').style.display = 'none';
 }
 
 function handleModalSubmit() {
