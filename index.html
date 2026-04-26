@@ -177,6 +177,11 @@ td {
   white-space: nowrap;
 }
 
+td .action-btns {
+  display: flex;
+  gap: 6px;
+}
+
 td a.team-link {
   color: var(--blue);
   text-decoration: none;
@@ -239,6 +244,25 @@ td .badge.wrong-badge {
 }
 
 .edit-btn:hover { background: var(--blue); color: #fff; }
+
+.copy-btn {
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.copy-btn:hover { background: var(--green); color: #fff; }
+
+.action-btns {
+  display: flex;
+  gap: 6px;
+}
 
 /* ===== Modal ===== */
 .modal-overlay {
@@ -637,7 +661,7 @@ function renderTableBody() {
       <td>${parlayBadge}</td>
       <td class="${profitCls}">${r.profit > 0 ? '+' : ''}${r.profit}</td>
       <td>${badge}</td>
-      <td><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button> <button class="copy-btn" data-id="${r._id}">复制</button></td>
+      <td><div class="action-btns"><button class="edit-btn" data-id="${r._id}">编辑</button> <button class="delete-btn" data-id="${r._id}">删除</button> <button class="copy-btn" data-id="${r._id}">复制</button></div></td>
     </tr>`;
   }).join('');
 
